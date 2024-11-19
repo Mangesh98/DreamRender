@@ -25,7 +25,7 @@ const Testimonials = () => {
 							<div className="flex mb-4">
 								{Array(testimonial.stars)
 									.fill(0)
-									.map((item, index) => (
+									.map((_item, index) => (
 										<img key={index} src={assets.rating_star} alt="" />
 									))}
 							</div>
