@@ -1,9 +1,78 @@
-import React from 'react'
+import { useState } from "react";
+import { assets } from "../assets/assets";
 
 const Result = () => {
-  return (
-    <div>Result</div>
-  )
-}
+	const [image, setImage] = useState<string>(assets.sample_img_1);
+	const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
+	const [Loading, setLoading] = useState<boolean>(false);
+	const [input, setInput] = useState<string>("");
 
-export default Result
+	const onSubmitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		setLoading(true);
+		setImage("");
+		// const response = await fetch("http://localhost:5000/api/generate", {
+		// 	method: "POST",
+		// 	headers: {
+		// 		"Content-Type": "application/json",
+		// 	},
+		// 	body: JSON.stringify({ prompt: input }),
+		// });
+		setLoading(false);
+	};
+
+	return (
+		<form
+			onSubmit={onSubmitHandler}
+			className="flex flex-col items-center justify-center min-h-[90vh]"
+		>
+			<div>
+				<div className="relative">
+					<img className="max-w-sm rounded" src={image} alt="" />
+					<span
+						className={`absolute bottom-0 left-0 h-1 bg-blue-500 ${
+							Loading ? "w-full transition-all duration-[10s]" : "w-0"
+						}`}
+					></span>
+				</div>
+				<p className={!Loading ? "hidden" : ""}>Loading....</p>
+			</div>
+			{!isImageLoaded && (
+				<div className="flex w-full max-w-xl bg-neutral-500 text-white text-sm p-0.5 mt-10 rounded-full">
+					<input
+						onChange={(e) => setInput(e.target.value)}
+						value={input}
+						className="flex-1 bg-transparent outline-none ml-8 max-sm:w-20"
+						type="text placeholder-color"
+						placeholder="Describe what you want to generate"
+					/>
+					<button
+						className="bg-zinc-900 px-10 sm:px-16 py-3 rounded-full"
+						type="submit"
+					>
+						Generate
+					</button>
+				</div>
+			)}
+			{isImageLoaded && (
+				<div className="flex gap-2 flex-wrap justify-center text-white text-sm p-0.5 mt-10 rounded-full">
+					<p
+						onClick={() => setIsImageLoaded(false)}
+						className="bg-transparent border border-zinc-900 text-black px-8 py-3 rounded-full cursor-pointer"
+					>
+						Generate Another
+					</p>
+					<a
+						download
+						className="bg-zinc-900 px-10 py-3 rounded-full cursor-pointer"
+						href={image}
+					>
+						Download
+					</a>
+				</div>
+			)}
+		</form>
+	);
+};
+
+export default Result;
