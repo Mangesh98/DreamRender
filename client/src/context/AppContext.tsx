@@ -1,27 +1,20 @@
-import React, { createContext, useState, ReactNode } from "react";
+import React, { createContext, useState } from "react";
+import { AppContextType, AppContextProviderProps } from "./AppContextTypes";
 
-// Define the context value type
-interface AppContextType {
-	user: boolean | null;
-	setUser: React.Dispatch<React.SetStateAction<boolean | null>>;
-}
-
-// Create the context with a default value of `undefined`
+// eslint-disable-next-line react-refresh/only-export-components
 export const AppContext = createContext<AppContextType | undefined>(undefined);
-
-// Define the props for the provider component
-interface AppContextProviderProps {
-	children: ReactNode;
-}
 
 const AppContextProvider: React.FC<AppContextProviderProps> = ({
 	children,
 }) => {
 	const [user, setUser] = useState<boolean | null>(null);
+	const [showLogin, setShowLogin] = useState<boolean>(false);
 
 	const value = {
 		user,
 		setUser,
+		showLogin,
+		setShowLogin,
 	};
 
 	return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
