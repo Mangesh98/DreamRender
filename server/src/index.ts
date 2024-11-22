@@ -2,9 +2,10 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import connectDB from "./config/mongodb";
+import userRouter from "./routes/userRoutes";
 
-dotenv.config();
-
+dotenv.config({ path: "../.env" });
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -25,13 +26,26 @@ const corsOptions: cors.CorsOptions = {
 
 // Middlewares
 app.use(cors(corsOptions));
-app.use(helmet()); 
+app.use(helmet());
 app.use(express.json());
+
+const startServer = async () => {
+	try {
+		await connectDB();
+		console.log("Server started...");
+		// Your server setup code here
+	} catch (error) {
+		console.error("Failed to start the server", error);
+	}
+};
+
+startServer();
 
 // Routes
 app.get("/", (req: Request, res: Response) => {
 	res.send("Dream Render Server is up and running!");
 });
+app.use("/api/user", userRouter);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
