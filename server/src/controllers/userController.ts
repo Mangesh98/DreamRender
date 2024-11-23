@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { User } from "../types/user";
 
 export const registerUser = async (req: any, res: any) => {
-	console.log("Inside register user api: ", req.body);
 	try {
 		const { name, email, password } = req.body;
 		if (!name || !email || !password) {
@@ -97,4 +96,30 @@ export const loginUser = async (req: any, res: any) => {
 			.status(500)
 			.json({ success: false, message: "Error logging in user", error });
 	}
+};
+
+export const userCredits = async (req: any, res: any) => {
+    try {
+        const { userId } = req.body;
+
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Invalid Details !" });
+        }
+        res.status(200).json({
+            success: true,
+            message: "User credits fetched successfully",
+            credits: user.creditBalance,
+            user: {
+                name: user.name,
+            },
+        });
+    } catch (error) {
+        console.log(error);
+        res
+            .status(500)
+            .json({ success: false, message: "Error fetching user credits", error });
+    }
 };
