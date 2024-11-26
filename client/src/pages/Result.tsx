@@ -1,24 +1,26 @@
 import { useState } from "react";
 import { assets } from "../assets/assets";
 import { motion } from "motion/react";
+import { useAppContext } from "../context/useAppContext";
 
 const Result = () => {
 	const [image, setImage] = useState<string>(assets.sample_img_1);
 	const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
 	const [Loading, setLoading] = useState<boolean>(false);
 	const [input, setInput] = useState<string>("");
+	const { generateImage } = useAppContext();
 
 	const onSubmitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setLoading(true);
-		setImage("");
-		// const response = await fetch("http://localhost:5000/api/generate", {
-		// 	method: "POST",
-		// 	headers: {
-		// 		"Content-Type": "application/json",
-		// 	},
-		// 	body: JSON.stringify({ prompt: input }),
-		// });
+		if (input) {
+			const res = await generateImage(input);
+			
+			if (res.success) {
+				setIsImageLoaded(true);
+				setImage(res.imageUrl);
+			}
+		}
 		setLoading(false);
 	};
 

@@ -6,7 +6,7 @@ import connectDB from "./config/mongodb";
 import userRouter from "./routes/userRoutes";
 import imageRouter from "./routes/imageRoutes";
 
-dotenv.config({ path: "../.env" });
+dotenv.config({ path: ".env" });
 const app = express();
 const port = process.env.PORT || 3000;
 

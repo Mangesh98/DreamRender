@@ -16,7 +16,7 @@ export const generateImage = async (req: Request, res: Response) => {
 		if (!userId || !prompt) {
 			return res.status(400).json({
 				success: false,
-				error: "Missing user ID or prompt",
+				message: "Missing user ID or prompt",
 			});
 		}
 
@@ -25,7 +25,7 @@ export const generateImage = async (req: Request, res: Response) => {
 		if (!user) {
 			return res.status(404).json({
 				success: false,
-				error: "User not found",
+				message: "User not found",
 			});
 		}
 
@@ -33,7 +33,7 @@ export const generateImage = async (req: Request, res: Response) => {
 		if (user.creditBalance <= 0) {
 			return res.status(403).json({
 				success: false,
-				error: "Insufficient credit balance",
+				message: "Insufficient credit balance",
 				creditBalance: user.creditBalance,
 			});
 		}
@@ -59,7 +59,7 @@ export const generateImage = async (req: Request, res: Response) => {
 			if (!data) {
 				return res.status(500).json({
 					success: false,
-					error: "Failed to generate image",
+					message: "Failed to generate image",
 				});
 			}
 
@@ -89,7 +89,7 @@ export const generateImage = async (req: Request, res: Response) => {
 
 				return res.status(error.response?.status || 500).json({
 					success: false,
-					error: "Error communicating with image generation service",
+					message: "Error communicating with image generation service",
 				});
 			}
 
@@ -97,7 +97,7 @@ export const generateImage = async (req: Request, res: Response) => {
 			console.error("Unexpected error:", error);
 			return res.status(500).json({
 				success: false,
-				error: "Unexpected error occurred",
+				message: "Unexpected error occurred",
 			});
 		}
 	} catch (error) {
@@ -105,7 +105,7 @@ export const generateImage = async (req: Request, res: Response) => {
 		console.error("Server error:", error);
 		return res.status(500).json({
 			success: false,
-			error: "Internal server error",
+			message: "Internal server error",
 		});
 	}
 };

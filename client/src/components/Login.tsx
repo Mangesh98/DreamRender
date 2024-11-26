@@ -2,10 +2,16 @@ import { useEffect, useState } from "react";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/useAppContext";
 import { motion } from "motion/react";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Login = () => {
 	const [state, setState] = useState<string>("Login");
-	const { setShowLogin } = useAppContext();
+	const { setShowLogin, backendUrl, setToken, setUser } = useAppContext();
+	const [name, setName] = useState<string>("");
+	const [email, setEmail] = useState<string>("");
+	const [password, setPassword] = useState<string>("");
+
 	useEffect(() => {
 		document.body.style.overflow = "hidden";
 		return () => {
@@ -13,9 +19,50 @@ const Login = () => {
 		};
 	}, []);
 
+	const onSubmitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		try {
+			if (state === "Login") {
+				// login
+				const { data } = await axios.post(backendUrl + "/api/user/login", {
+					email,
+					password,
+				});
+				if (data.success) {
+					setToken(data.token);
+					setUser(data.user);
+					localStorage.setItem("token", data.token);
+					// localStorage.setItem("user", JSON.stringify(data.user));
+				} else {
+					toast.error(data.message);
+				}
+			} else {
+				// signup
+				const { data } = await axios.post(backendUrl + "/api/user/register", {
+					name,
+					email,
+					password,
+				});
+				if (data.success) {
+					setToken(data.token);
+					setUser(data.user);
+					localStorage.setItem("token", data.token);
+					// localStorage.setItem("user", JSON.stringify(data.user));
+				} else {
+					toast.error(data.message);
+				}
+			}
+			setShowLogin(false);
+		} catch (error) {
+			console.log(error);
+			toast.error("Something went wrong");
+		}
+	};
+
 	return (
 		<div className="fixed top-0 left-0 right-0 bottom-0 z-10 backdrop-blur-sm bg-black/30 flex justify-center items-center">
 			<motion.form
+				onSubmit={onSubmitHandler}
 				initial={{ opacity: 0.2, y: 50 }}
 				transition={{ duration: 0.3 }}
 				whileInView={{ opacity: 1, y: 0 }}
@@ -34,6 +81,8 @@ const Login = () => {
 							type="text"
 							placeholder="Full Name"
 							required
+							onChange={(e) => setName(e.target.value)}
+							value={name}
 						/>
 					</div>
 				)}
@@ -44,6 +93,8 @@ const Login = () => {
 						type="email"
 						placeholder="Email id"
 						required
+						onChange={(e) => setEmail(e.target.value)}
+						value={email}
 					/>
 				</div>
 				<div className="border px-6 py-2 flex items-center gap-2 rounded-full mt-4">
@@ -53,6 +104,8 @@ const Login = () => {
 						type="password"
 						placeholder="Password"
 						required
+						onChange={(e) => setPassword(e.target.value)}
+						value={password}
 					/>
 				</div>
 				<p className="text-sm text-blue-600 my-4 cursor-pointer">

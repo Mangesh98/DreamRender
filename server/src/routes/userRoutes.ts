@@ -9,6 +9,6 @@ import { authenticateUser } from "../middlewares/authenticateUser";
 const userRouter = express.Router();
 userRouter.post("/register", registerUser);
 userRouter.post("/login", loginUser);
-userRouter.post("/credits", authenticateUser, userCredits);
+userRouter.get("/credits", authenticateUser, userCredits);
 
 export default userRouter;
