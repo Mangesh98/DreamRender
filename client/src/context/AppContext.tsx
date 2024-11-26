@@ -28,13 +28,12 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({
 		try {
 			const { data } = await axios.post(
 				`${backendUrl}/api/image/generate-image`,
-				{
-					prompt,
-				},
+				{ prompt },
 				{
 					headers: {
 						token,
 					},
+					validateStatus: (status) => status < 500, // Only throw for 500+ status codes
 				}
 			);
 
@@ -44,17 +43,24 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({
 			} else {
 				loadCredit();
 				toast.error(data.message);
-				if (data.credits === 0) {
+
+				if (data.creditBalance === 0) {
 					navigate("/buy");
 				}
 				return { success: false, imageUrl: "" };
 			}
 		} catch (error) {
+			// Handle Axios or other errors
 			if (axios.isAxiosError(error)) {
-				toast.error(error.response?.data.message);
+				// Handle cases like network issues or 500+ errors
+				const errorMessage =
+					error.response?.data?.message || "An error occurred.";
+				toast.error(errorMessage);
 			} else {
-				toast.error("Something went wrong");
+				// Handle unexpected runtime errors
+				toast.error("Something went wrong. Please try again.");
 			}
+
 			return { success: false, imageUrl: "" };
 		}
 	};
