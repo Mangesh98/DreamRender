@@ -4,6 +4,7 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import connectDB from "./config/mongodb";
 import userRouter from "./routes/userRoutes";
+import imageRouter from "./routes/imageRoutes";
 
 dotenv.config({ path: "../.env" });
 const app = express();
@@ -46,6 +47,7 @@ app.get("/", (req: Request, res: Response) => {
 	res.send("Dream Render Server is up and running!");
 });
 app.use("/api/user", userRouter);
+app.use("/api/image", imageRouter);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
