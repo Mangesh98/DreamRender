@@ -46,7 +46,6 @@ export const authenticateUser = async (
 
 		req.body.userId = decodedToken.id; // Assign only the string ID.
 
-
 		next();
 	} catch (error) {
 		if (error instanceof AuthenticationError) {

@@ -2,11 +2,101 @@ import { useContext } from "react";
 import { assets, plans } from "../assets/assets";
 import { AppContext } from "../context/AppContext";
 import { motion } from "motion/react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import axios from "axios";
+import { useRazorpay, RazorpayOrderOptions } from "react-razorpay";
+import { Orders } from "razorpay/dist/types/orders";
 
 const BuyCredit = () => {
+	const { Razorpay } = useRazorpay();
+	const navigate = useNavigate();
 	const appContext = useContext(AppContext);
 	if (!appContext) return null;
-	const { user } = appContext;
+	const { user, backendUrl, token, setShowLogin, loadCredit } = appContext;
+
+	const initPay = async (order: Orders.RazorpayOrder) => {
+		try {
+			const options: RazorpayOrderOptions = {
+				key: import.meta.env.RAZORPAY_KEY_ID || "",
+				amount: Number(order.amount),
+				currency: "INR",
+				name: "Credit Purchase",
+				description: "Purchase credits for your account",
+				order_id: order.id,
+				handler: async (response) => {
+					try {
+						const { data } = await axios.post(
+							`${backendUrl}/api/user/verify-razor`,
+							{ response },
+							{
+								headers: { token }, 
+								validateStatus: (status: number) => status < 500,
+							}
+						);
+
+						if (data.success) {
+							loadCredit();
+							toast.success("Purchase successful!");
+							navigate("/");
+						} else {
+							toast.error(data.message || "Purchase verification failed.");
+						}
+					} catch (error) {
+						console.error(error);
+						toast.error("Verification failed. Please try again later.");
+					}
+				},
+
+				theme: {
+					color: "#3399cc",
+				},
+			};
+
+			const rzp = new Razorpay(options);
+			rzp.open();
+
+			rzp.on("payment.failed", (response) => {
+				console.error("Payment failed:", response.error);
+				toast.error("Payment failed. Please try again.");
+			});
+		} catch (error) {
+			console.error("Razorpay Initialization Error:", error);
+			toast.error(
+				"Something went wrong initializing payment. Please try again."
+			);
+		}
+	};
+
+	const handlePurchase = async (planId: string) => {
+		try {
+			if (!user) {
+				setShowLogin(true);
+				return;
+			}
+
+			const { data } = await axios.post(
+				`${backendUrl}/api/user/pay-razor`,
+				{ planId },
+				{
+					headers: {
+						token,
+					},
+					validateStatus: (status) => status < 500, // Only throw for 500+ status codes
+				}
+			);
+			console.log(data);
+
+			// await loadCredit();
+			if (data.success) {
+				initPay(data.order);
+			}
+		} catch (error) {
+			console.log(error);
+
+			toast.error("Something went wrong!");
+		}
+	};
 	return (
 		<motion.div
 			initial={{ opacity: 0.2, y: 100 }}
@@ -34,7 +124,10 @@ const BuyCredit = () => {
 							<span className="text-3xl font-medium"> ₹{plan.price} </span> /{" "}
 							{plan.credits} credits
 						</p>
-						<button className="w-full bg-gray-800 text-white mt-8 text-sm rounded-md py-2.5 min-w-52">
+						<button
+							onClick={() => handlePurchase(plan.id)}
+							className="w-full bg-gray-800 text-white mt-8 text-sm rounded-md py-2.5 min-w-52"
+						>
 							{user ? "Purchase" : "Get Started"}
 						</button>
 					</div>
