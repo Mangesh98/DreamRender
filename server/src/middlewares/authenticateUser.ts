@@ -44,7 +44,7 @@ export const authenticateUser = async (
 			throw new AuthenticationError(401, "Invalid token");
 		}
 
-		req.body.userId = decodedToken.id; // Assign only the string ID.
+		req.body.userId = decodedToken.id; 
 
 		next();
 	} catch (error) {

@@ -6,33 +6,42 @@ import Razorpay from "razorpay";
 import { Request, Response } from "express";
 import transactionModel from "../models/transactionModel";
 
-export const registerUser = async (req: any, res: any) => {
+
+export const registerUser = async (
+	req: Request,
+	res: Response
+): Promise<void> => {
 	try {
 		const { name, email, password } = req.body;
+
 		if (!name || !email || !password) {
-			return res
+			res
 				.status(400)
 				.json({ success: false, message: "Please provide all fields" });
+			return;
 		}
-		const user = await userModel.findOne({ email });
-		if (user) {
-			return res
-				.status(400)
-				.json({ success: false, message: "User already exists" });
+
+		const existingUser = await userModel.findOne({ email });
+		if (existingUser) {
+			res.status(400).json({ success: false, message: "User already exists" });
+			return;
 		}
+
 		const salt = await bcrypt.genSalt(10);
 		const hashedPassword = await bcrypt.hash(password, salt);
-		const userData: User = {
+
+		const newUser = new userModel<User>({
 			name,
 			email,
 			password: hashedPassword,
-		};
-		const newUser = await userModel.create(userData);
+		});
+
+		await newUser.save();
+
 		if (!process.env.JWT_SECRET) {
-			return res
-				.status(500)
-				.json({ success: false, message: "JWT secret not set" });
+			throw new Error("JWT_SECRET is not set in environment variables");
 		}
+
 		const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
 			expiresIn: "1d",
 		});
@@ -41,45 +50,45 @@ export const registerUser = async (req: any, res: any) => {
 			success: true,
 			message: "User created successfully",
 			token,
-			user: {
-				name: newUser.name,
-			},
+			user: { name: newUser.name },
 		});
 	} catch (error) {
-		console.log(error);
-
-		res
-			.status(500)
-			.json({ success: false, message: "Error creating user", error });
+		console.error("Error in registerUser:", error);
+		res.status(500).json({ success: false, message: "Server error", error });
 	}
 };
 
-export const loginUser = async (req: any, res: any) => {
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
 	try {
 		const { email, password } = req.body;
+
 		if (!email || !password) {
-			return res
+			res
 				.status(400)
 				.json({ success: false, message: "Please provide all fields" });
+			return;
 		}
+
 		const user = await userModel.findOne({ email });
 		if (!user) {
-			return res
+			res
 				.status(400)
-				.json({ success: false, message: "Invalid Details !" });
+				.json({ success: false, message: "Invalid email or password" });
+			return;
 		}
 
 		const isPasswordValid = await bcrypt.compare(password, user.password);
 		if (!isPasswordValid) {
-			return res
+			res
 				.status(400)
-				.json({ success: false, message: "Invalid Details !" });
+				.json({ success: false, message: "Invalid email or password" });
+			return;
 		}
+
 		if (!process.env.JWT_SECRET) {
-			return res
-				.status(500)
-				.json({ success: false, message: "JWT secret not set" });
+			throw new Error("JWT_SECRET is not set in environment variables");
 		}
+
 		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
 			expiresIn: "1d",
 		});
@@ -88,45 +97,43 @@ export const loginUser = async (req: any, res: any) => {
 			success: true,
 			message: "User logged in successfully",
 			token,
-			user: {
-				name: user.name,
-			},
+			user: { name: user.name },
 		});
 	} catch (error) {
-		console.log(error);
-
-		res
-			.status(500)
-			.json({ success: false, message: "Error logging in user", error });
+		console.error("Error in loginUser:", error);
+		res.status(500).json({ success: false, message: "Server error", error });
 	}
 };
 
-export const userCredits = async (req: any, res: any) => {
+export const userCredits = async (
+	req: Request,
+	res: Response
+): Promise<void> => {
 	try {
 		const { userId } = req.body;
 
+		if (!userId) {
+			res.status(400).json({ success: false, message: "User ID not provided" });
+			return;
+		}
+
 		const user = await userModel.findById(userId);
 		if (!user) {
-			return res
-				.status(400)
-				.json({ success: false, message: "Invalid Details !" });
+			res.status(404).json({ success: false, message: "User not found" });
+			return;
 		}
+
 		res.status(200).json({
 			success: true,
 			message: "User credits fetched successfully",
 			credits: user.creditBalance,
-			user: {
-				name: user.name,
-			},
+			user: { name: user.name },
 		});
 	} catch (error) {
-		console.log(error);
-		res
-			.status(500)
-			.json({ success: false, message: "Error fetching user credits", error });
+		console.error("Error in userCredits:", error);
+		res.status(500).json({ success: false, message: "Server error", error });
 	}
 };
-
 
 interface PlanConfig {
 	plan: string;
@@ -249,6 +256,7 @@ export const verifyRazorpay = async (req: Request, res: Response) => {
 		}
 
 		user.creditBalance += transactionData.credits;
+		user.payment = true;
 		await user.save();
 
 		return res.status(200).json({

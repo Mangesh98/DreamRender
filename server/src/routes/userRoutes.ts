@@ -12,20 +12,6 @@ const userRouter = express.Router();
 userRouter.post("/register", registerUser);
 userRouter.post("/login", loginUser);
 userRouter.get("/credits", authenticateUser, userCredits);
-// userRouter.post(
-// 	"/pay-razor",
-// 	authenticateUser,
-// 	(req: Request, res: Response, next: NextFunction) => {
-// 		paymentRazorpay(req, res).catch(next);
-// 	}
-// );
-// userRouter.post(
-// 	"/verify-razor",
-// 	authenticateUser,
-// 	(req: Request, res: Response, next: NextFunction) => {
-// 		verifyRazorpay(req, res).catch(next);
-// 	}
-// );
 userRouter.post(
 	"/pay-razor",
 	authenticateUser,
