@@ -5,7 +5,7 @@ import { Transaction, User } from "../types/types";
 import Razorpay from "razorpay";
 import { Request, Response } from "express";
 import transactionModel from "../models/transactionModel";
-
+import axios from "axios";
 
 export const registerUser = async (
 	req: Request,
@@ -141,8 +141,9 @@ interface PlanConfig {
 	amount: number;
 }
 
+
 const PLAN_CONFIGS: Record<string, PlanConfig> = {
-	Basic: { plan: "Basic", credits: 100, amount: 10 },
+	Basic: { plan: "Basic", credits: 100, amount: 10 }, // amount in USD
 	Advanced: { plan: "Advanced", credits: 500, amount: 50 },
 	Business: { plan: "Business", credits: 5000, amount: 250 },
 };
@@ -152,6 +153,18 @@ const getRazorpayInstance = () =>
 		key_id: process.env.RAZORPAY_KEY_ID || "",
 		key_secret: process.env.RAZORPAY_KEY_SECRET || "",
 	});
+
+// Function to fetch real-time USD to INR exchange rate
+const getRealTimeUsdToInr = async (): Promise<number> => {
+	try {
+		const API_URL = "https://api.exchangerate-api.com/v4/latest/USD";
+		const response = await axios.get(API_URL);
+		return response.data.rates.INR;
+	} catch (error) {
+		console.error("Error fetching exchange rate:", error);
+		throw new Error("Failed to fetch exchange rate");
+	}
+};
 
 export const paymentRazorpay = async (req: Request, res: Response) => {
 	try {
@@ -173,9 +186,14 @@ export const paymentRazorpay = async (req: Request, res: Response) => {
 			});
 		}
 
+		// Fetch the real-time USD to INR exchange rate
+		const usdToInrRate = await getRealTimeUsdToInr();
+		const amountInRupees = planConfig.amount * usdToInrRate;
+
 		const transactionData = {
 			userId,
 			...planConfig,
+			amountInRupees,
 			date: new Date(),
 		};
 
@@ -183,8 +201,8 @@ export const paymentRazorpay = async (req: Request, res: Response) => {
 		const razorpayInstance = getRazorpayInstance();
 
 		const options = {
-			amount: planConfig.amount * 100,
-			currency: process.env.RAZORPAY_CURRENCY || "INR",
+			amount: Math.round(amountInRupees * 100), // Razorpay expects amount in paise
+			currency: "INR",
 			receipt: transaction._id.toString(),
 			payment_capture: 1,
 		};
