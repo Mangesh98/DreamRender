@@ -47,3 +47,5 @@ Thumbs.db
 
 # Debugger configs
 .vscode/launch.json
+
+.gitignore
