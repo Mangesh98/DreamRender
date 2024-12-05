@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/useAppContext";
 import { motion } from "motion/react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 
 const Login = () => {
@@ -54,8 +54,15 @@ const Login = () => {
 			}
 			setShowLogin(false);
 		} catch (error) {
-			console.log(error);
-			toast.error("Something went wrong");
+			if (axios.isAxiosError(error)) {
+				const axiosError = error as AxiosError<{ message: string }>;
+				const errorMessage =
+					axiosError.response?.data?.message ||
+					"Server error. Please try again later.";
+				toast.error(errorMessage);
+			} else {
+				toast.error("An unexpected error occurred. Please try again.");
+			}
 		}
 	};
 

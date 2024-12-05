@@ -4,7 +4,7 @@ import { AppContext } from "../context/AppContext";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useRazorpay, RazorpayOrderOptions } from "react-razorpay";
 import { Orders } from "razorpay/dist/types/orders";
 
@@ -30,7 +30,7 @@ const BuyCredit = () => {
 							`${backendUrl}/api/user/verify-razor`,
 							{ response },
 							{
-								headers: { token }, 
+								headers: { token },
 								validateStatus: (status: number) => status < 500,
 							}
 						);
@@ -85,16 +85,22 @@ const BuyCredit = () => {
 					validateStatus: (status) => status < 500, // Only throw for 500+ status codes
 				}
 			);
-			console.log(data);
+			// console.log(data);
 
 			// await loadCredit();
 			if (data.success) {
 				initPay(data.order);
 			}
 		} catch (error) {
-			console.log(error);
-
-			toast.error("Something went wrong!");
+			if (axios.isAxiosError(error)) {
+				const axiosError = error as AxiosError<{ message: string }>;
+				const errorMessage =
+					axiosError.response?.data?.message ||
+					"Server error. Please try again later.";
+				toast.error(errorMessage);
+			} else {
+				toast.error("An unexpected error occurred. Please try again.");
+			}
 		}
 	};
 	return (
@@ -121,8 +127,8 @@ const BuyCredit = () => {
 						<p className="mt-3 mb-1 font-semibold">{plan.id}</p>
 						<p className="text-sm">{plan.desc}</p>
 						<p className="mt-6">
-							<span className="text-3xl font-medium"> &#36;{plan.price} </span> /{" "}
-							{plan.credits} credits
+							<span className="text-3xl font-medium"> &#36;{plan.price} </span>{" "}
+							/ {plan.credits} credits
 						</p>
 						<button
 							onClick={() => handlePurchase(plan.id)}

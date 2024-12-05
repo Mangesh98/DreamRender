@@ -4,7 +4,7 @@ import {
 	AppContextProviderProps,
 	User,
 } from "./AppContextTypes";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { GenerateImageResponse } from "./AppContextTypes";
@@ -83,7 +83,15 @@ const AppContextProvider: React.FC<AppContextProviderProps> = ({
 				setUser(data.user);
 			}
 		} catch (error) {
-			console.log(error);
+			if (axios.isAxiosError(error)) {
+				const axiosError = error as AxiosError<{ message: string }>;
+				const errorMessage =
+					axiosError.response?.data?.message ||
+					"Server error. Please try again later.";
+				toast.error(errorMessage);
+			} else {
+				toast.error("An unexpected error occurred. Please try again.");
+			}
 		}
 	};
 	useEffect(() => {

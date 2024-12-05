@@ -113,7 +113,7 @@ interface GenerateImageRequest {
 export const generateImage = async (req: Request, res: Response) => {
 	try {
 		const { userId, prompt } = req.body as GenerateImageRequest;
-		console.log(prompt);
+		// console.log(prompt);
 
 		// Validate input
 		if (!userId || !prompt) {
@@ -173,7 +173,7 @@ export const generateImage = async (req: Request, res: Response) => {
 			const base64Image = Buffer.from(data, "binary").toString("base64");
 			const image_url = `data:image/jpeg;base64,${base64Image}`;
 
-			console.log(image_url);
+			// console.log(image_url);
 			// Update user credit balance
 			user.creditBalance -= 1;
 			await user.save();
